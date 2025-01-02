@@ -25,7 +25,7 @@ class ExpenseRepository {
       const db = getDB();
       const collection = db.collection(this.collectionName);
 
-      return await collection.findById(id)
+      return await collection.findOne({ _id: new ObjectId(id) })
     } catch (error) {
       console.log(error.message);
 
@@ -38,7 +38,8 @@ class ExpenseRepository {
       const db = getDB();
       const collection = db.collection(this.collectionName);
 
-      return await collection.find()
+      const expenses = await collection.find().toArray()
+      return expenses;
     } catch (error) {
       console.log(error.message);
 
@@ -55,7 +56,7 @@ class ExpenseRepository {
         $push: { tags: tag }
       })
 
-      return "Tags added successfully"
+      return "Tags added successfully."
     } catch (error) {
       console.log(error.message);
 
@@ -63,9 +64,29 @@ class ExpenseRepository {
   }
 
   // Filter expenses based on date, amount, and isRecurring field
-  async filterExpenses(criteria) {
+  async filterExpenses(minAmount, maxAmount, isRecurring) {
+    try {
+      const db = getDB();
+      const collection = db.collection(this.collectionName);
 
+      const filterExpression = {};
+
+      if (minAmount) {
+        filterExpression.amount = { $gte: parseFloat(minAmount) }
+      }
+      if (maxAmount) {
+        filterExpression.amount = { $lte: parseFloat(maxAmount) }
+      }
+      if (isRecurring) {
+        filterExpression.isRecurring = { $eq: isRecurring }
+      }
+      const filteredExpenses = await collection.find(filterExpression).toArray();
+      return filteredExpenses;
+    } catch (error) {
+      return "Something is wrong with the databases!"
+    }
   }
+
 }
 
 export default ExpenseRepository;
